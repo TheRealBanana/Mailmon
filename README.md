@@ -1,5 +1,7 @@
 # Mailmon
 Crappy email auto-responder bot
+Mailmon will read incoming emails looking for certain commands and execute a specific script based on the command it finds, making a very basic auto-responder bot.
+
 
 There are two versions here, one older one in bash and a newer one in Python. If you know how to program in python, I highly recommend you use that version. This readme will mostly apply to the python version, as the bash version is very simple and shouldn't require much explanation beyond the comments already inside mailmon.sh.
 
