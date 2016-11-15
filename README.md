@@ -30,6 +30,8 @@ authorized_emails - This is a list of email addresses that are authorized to use
 cmdlist - This is a list of the commands the bot knows. This just affects the help output, the command will still run even if it’s not in the list.
 
 MASTER_RATIO - This affects the matching system used when an unknown command is encountered. Mailmon will attempt to match the unknown command against cmdlist and suggest the proper command if it finds it. This number adjusts the sensitivity of the matcher with higher numbers being more restrictive. A value of 0.75 is the default and works well in most situations.
+
+
 After adjusting the options make sure you chmod +x the mailmon.sh or mailmon2.py files and you are ready to go! Send out a test email to confirm everything is working.
 
 
