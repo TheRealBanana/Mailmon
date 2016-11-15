@@ -11,7 +11,7 @@ First off to use either of these scripts requires you make a file called .forwar
 
 >/home/mailmon/.forward
 
-And inside we add the follow (change the folder paths to your requirements):
+And inside we add the following (change the folder paths to your requirements):
 
 >/home/mailmon/data/mail.txt,"|/home/mailmon/mailmon.sh"
 
