@@ -9,11 +9,11 @@ There are two versions here, one older one in bash and a newer one in Python. If
 
 First off to use either of these scripts requires you make a file called .forward in the home directory of the user receiving the emails. So in our example that user is mailmon, we would make the file:
 
-/home/mailmon/.forward
+>/home/mailmon/.forward
 
 And inside we add the follow (change the folder paths to your requirements):
 
-/home/mailmon/data/mail.txt,"|/home/mailmon/mailmon.sh"
+>/home/mailmon/data/mail.txt,"|/home/mailmon/mailmon.sh"
 
 Make sure you adjust the path to where the mail.txt is written to in the script options. After that you must open up mailmon.sh or mailmon2.py and adjust the settings inside.
 
