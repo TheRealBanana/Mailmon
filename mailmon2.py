@@ -203,7 +203,6 @@ def send_email(message, return_address):
     #Send the email, then close the connection
     smtpconn.sendmail(SMTP_FROM_ADDR, return_address, return_message.as_string())
     smtpconn.quit()
-    print return_message
     
 if __name__ == "__main__":
     main()
