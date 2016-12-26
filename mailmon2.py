@@ -1,16 +1,16 @@
 #!/bin/env python2.7
-# Mailmon v2.0 by Kyle Claisse
+# Mailmon v2.1 by Kyle Claisse
 # This script reads in an email in text form and executes certain functions based on the content of the message.
 #
-# Current requires a working MTA and the mail command on the box this bot is running (I use Heirloom Mail v12.4)
-# Probably should rewrite to use the smtplib python library but I never needed to. Would be trivial to rewrite to
-# allow using third-party SMTP servers like gmail. Something for version 2.1 I guess.
+# Version 2.1 now uses remote SMTP servers instead of local MTAs to send mail. Make sure you go over the new configuration options!
 
 
 import email
+import smtplib
 import re
-from time import strftime
 import os
+from time import strftime
+from email.mime.text import MIMEText
 from subprocess import check_output as sp_co
 from difflib import SequenceMatcher as sMatcher
 
@@ -20,8 +20,21 @@ from difflib import SequenceMatcher as sMatcher
 #### OPTIONS START ####
 #######################
 
+#Hostname of the SMTP server for return emails
+SMTP_HOSTNAME = "smtp.example.com"
+#Port of the SMTP server for return emails
+SMTP_PORT = 587
+#Username and password. If authentication is not required just leave both blank.
+SMTP_USERNAME = "username"
+SMTP_PASSWORD = "p@ssw0rd"
+#Enable or disable TLS encryption
+SMTP_TLS = True
 #This is the email address the autoresponder bot will use for the From: address in its return email.
-FROM_ADDRESS = "mailmon@example.com"
+SMTP_FROM_ADDR = "mailmon@example.com"
+#Subject to use in return emails. Leave blank for no subject 
+SMTP_SUBJECT = "Mailmon Autoresponder"
+
+
 
 #This is the path where the mail.txt is being output to. See readme for details.
 path = "/home/mailmon/data"
@@ -60,6 +73,12 @@ outfile = path + os.sep + "out.txt"
 
 
 def check_address(addy):
+    #Convert to usable format if necessary
+    check = re.match(".*?<(.*?@.*?\..*?)>", addy)
+    if check is not None:
+        addy = check.group(1)
+    
+    #Now check if the number is authorized
     for x in authorized_emails:
         if x == "ALLOW_ALL":
             return True
@@ -71,11 +90,21 @@ def check_address(addy):
 def main():    
     return_message = "UNKNOWN ERROR, RETURN EMAIL NOT SET"
     
+    #Load up the email into memory and remove the file on disk, that way we can process subsequent emails without overwriting anything.
     email_file = open(emf, 'r')
     msgobj = email.message_from_file(email_file)
     email_file.close()
+    try:
+        os.remove(emf)
+    except:
+        pass
+    
+    
     if msgobj.is_multipart() is False:
         message = msgobj.get_payload()
+    else:
+        #Multipart message, just get the text portion
+        message = msgobj.get_payload()[0].get_payload()
         
     return_addy = msgobj.__getitem__("from")
     
@@ -128,8 +157,8 @@ def main():
     #############################################
    
     elif "help" in nmsg:
-        cmdstr = "%s" % (cmdlist[3],)
-        for cmd in cmdlist[4:]:
+        cmdstr = cmdlist[0]
+        for cmd in cmdlist[1:]:
             cmdstr += ", " + cmd
         return_message = "List of commands: %s" % cmdstr
     
@@ -146,45 +175,35 @@ def main():
     send_email(return_message, return_addy)
     
     
-def send_email(message, to_address):
+    
+def send_email(message, return_address):
     if len(message) < 1:
         return
-    #Remove file first
     
-    try:
-        os.remove(outfile)
-    except:
-        pass
-    
-    ofile = open(outfile, 'w')
-    ofile.write(message)
-    ofile.close()
-    
-    #Check if we have a good return email
-    if "ERROR" not in to_address:
-        #Send email out
-        cmd = "mail -r %s %s < %s" % (FROM_ADDRESS, to_address, outfile)
-        os.system(cmd)
-    else:
-        #Write the error to the log
-        pq = open(path + os.sep + "mailmon_use.log", 'a')
-        log_message = str(strftime("%A %B %d, %Y - %r %Z")) + " :: " + to_address
-        pq.write(log_message)
-        pq.write("\n")
-        pq.close()
+    #Build our email reply
+    return_message = MIMEText(message)
+    return_message["From"] = SMTP_FROM_ADDR
+    return_message["To"] = return_address
+    if len(SMTP_SUBJECT) > 0:
+        return_message["Subject"] = SMTP_SUBJECT
     
     
-    #Remove both email files
-    try:
-        os.remove(outfile)
-    except:
-        pass
-    
-    try:
-        os.remove(emf)
-    except:
-        pass
+    #Send email out
+    #Connect and authenticate (if required)
+    smtpconn = smtplib.SMTP(SMTP_HOSTNAME, SMTP_PORT)
+    smtpconn.ehlo_or_helo_if_needed()
+    if SMTP_TLS is True:
+        smtpconn.starttls()
+        smtpconn.ehlo_or_helo_if_needed()
+    if len(SMTP_USERNAME) > 0:
+        try:
+            smtpconn.login(SMTP_USERNAME, SMTP_PASSWORD)
+        except Exception as e:
+            raise(Exception("SMTP USERNAME/PASSWORD FAIL\n\nException was:\n\n%s" % e)) #More verbose than the normal error message, will include the normal message too
+    #Send the email, then close the connection
+    smtpconn.sendmail(SMTP_FROM_ADDR, return_address, return_message.as_string())
+    smtpconn.quit()
+    print return_message
     
 if __name__ == "__main__":
     main()
-
