@@ -130,7 +130,7 @@ def main():
         return_message = "Hello there! The current time here is: " + str(strftime("%A %B %d, %Y - %r %Z"))
    
     elif nmsg == "uptime":
-        uptime = sp_co('''uptime | egrep "([0-9][0-9]:?){3}.up.[0-9]{1,4}.days?" -o''', shell=True)
+        uptime = sp_co('''uptime | grep -oP "(?<=up ).*?(?=,)"''', shell=True)
         return_message = "Current system uptime is: " + uptime.strip()
     
     elif nmsg == "whos-logged-in":
