@@ -130,8 +130,21 @@ def main():
         return_message = "Hello there! The current time here is: " + str(strftime("%A %B %d, %Y - %r %Z"))
    
     elif nmsg == "uptime":
-        uptime = sp_co('''uptime | grep -oP "(?<=up ).*?(?=,)"''', shell=True)
-        return_message = "Current system uptime is: " + uptime.strip()
+        uptime_total_seconds = float(sp_co("cat /proc/uptime | awk '{print $1}'", shell=True))
+        days = int(uptime_total_seconds/(60*60*24)) #Not worrying about leap seconds or DST.
+        hours = int(uptime_total_seconds%(60*60*24)/(60*60))
+        minutes = int(uptime_total_seconds%(60*60*24)%(60*60)/60)
+        seconds = int(uptime_total_seconds%(60*60*24)%(60*60)%60)
+        timestring = ""
+        if days > 0:
+            timestring += "%s days " % days
+        if hours > 0:
+            timestring += "%s hours " % hours
+        if minutes > 0:
+            timestring += "%s minutes " % minutes
+        if seconds > 0:
+            timestring += "%s seconds" % seconds
+        return_message = "Current system uptime is: " + timestring
     
     elif nmsg == "whos-logged-in":
         try:
